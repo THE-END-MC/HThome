@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>新标签页</title>
+    <title>我的浏览器主页</title>
     <style>
         :root {
             --primary-color: #4285f4;
@@ -29,11 +29,28 @@
             touch-action: manipulation;
         }
         
+        .header {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
         .time-display {
             font-size: var(--time-font-size);
-            margin: 20px 0;
+            margin: 0;
             text-align: center;
             user-select: none;
+        }
+        
+        .menu-button {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--primary-color);
+            padding: 5px 10px;
         }
         
         .search-container {
@@ -98,8 +115,6 @@
             border-radius: 8px;
             box-shadow: 0 2px 5px rgba(0,0,0,0.1);
             position: relative;
-            cursor: pointer;
-            touch-action: none;
         }
         
         .link-icon {
@@ -124,7 +139,6 @@
             max-width: 100%;
             height: auto;
             border-radius: 8px;
-            cursor: pointer;
         }
         
         .audio-player {
@@ -144,40 +158,6 @@
         
         .stat-item {
             margin: 5px 0;
-            display: flex;
-            justify-content: space-between;
-        }
-        
-        .edit-button {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            background-color: var(--primary-color);
-            color: white;
-            border: none;
-            border-radius: 50%;
-            width: 50px;
-            height: 50px;
-            font-size: 20px;
-            cursor: pointer;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
-            z-index: 100;
-        }
-        
-        .menu-button {
-            position: fixed;
-            top: 20px;
-            left: 20px;
-            background-color: var(--primary-color);
-            color: white;
-            border: none;
-            border-radius: 50%;
-            width: 50px;
-            height: 50px;
-            font-size: 20px;
-            cursor: pointer;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
-            z-index: 100;
         }
         
         .modal {
@@ -277,21 +257,33 @@
             padding: 10px;
             margin-bottom: 10px;
             border-radius: 4px;
+            position: relative;
         }
         
-        .drag-handle {
-            cursor: move;
-            padding: 5px;
-            background-color: #f0f0f0;
+        .remove-link {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background-color: var(--accent-color);
+            color: white;
+            border: none;
             border-radius: 4px;
-            margin-bottom: 5px;
-            display: inline-block;
+            padding: 2px 6px;
+            cursor: pointer;
         }
         
-        @media (max-width: 768px) {
-            .tab-buttons {
-                overflow-x: auto;
-                white-space: nowrap;
+        @media (max-width: 600px) {
+            .container {
+                width: 95%;
+            }
+            
+            .quick-links {
+                grid-template-columns: repeat(3, 1fr);
+            }
+            
+            .search-engine-selector {
+                right: 90px;
+                font-size: 14px;
             }
             
             .modal-content {
@@ -302,9 +294,10 @@
     </style>
 </head>
 <body>
-    <button class="menu-button" id="menuButton">☰</button>
-    
-    <div class="time-display" id="timeDisplay"></div>
+    <div class="header">
+        <div class="time-display" id="timeDisplay"></div>
+        <button class="menu-button" id="menuButton">☰</button>
+    </div>
     
     <div class="search-container">
         <input type="text" id="searchInput" class="search-box" placeholder="搜索..." autocomplete="off">
@@ -313,7 +306,8 @@
     </div>
     
     <div class="stats-container" id="statsContainer">
-        <!-- 统计数据将通过JavaScript动态添加 -->
+        <div class="stat-item" id="bilibiliStat">B站粉丝: 加载中...</div>
+        <div class="stat-item" id="youtubeStat">YouTube订阅: 加载中...</div>
     </div>
     
     <div class="media-container" id="mediaContainer">
@@ -324,10 +318,8 @@
         <!-- 链接将通过JavaScript动态添加 -->
     </div>
     
-    <button class="edit-button" id="editButton">✏️</button>
-    
-    <!-- 主编辑模态框 -->
-    <div class="modal" id="mainEditModal">
+    <!-- 编辑模态框 -->
+    <div class="modal" id="editModal">
         <div class="modal-content">
             <div class="tab-buttons">
                 <button class="tab-button active" data-tab="appearance">外观</button>
@@ -449,46 +441,11 @@
                     <label for="statsRefreshInterval">刷新间隔 (分钟)</label>
                     <input type="number" id="statsRefreshInterval" value="30" min="1">
                 </div>
-                <button id="refreshStats" class="btn btn-primary">立即刷新数据</button>
             </div>
             
             <div class="form-actions">
                 <button class="btn btn-close" id="cancelEdit">取消</button>
                 <button class="btn btn-primary" id="saveSettings">保存</button>
-            </div>
-        </div>
-    </div>
-    
-    <!-- 链接编辑模态框 -->
-    <div class="modal" id="linkEditModal">
-        <div class="modal-content">
-            <h3>编辑快捷方式</h3>
-            <div class="form-group">
-                <label for="editLinkName">名称</label>
-                <input type="text" id="editLinkName" class="form-group">
-            </div>
-            <div class="form-group">
-                <label for="editLinkUrl">URL</label>
-                <input type="text" id="editLinkUrl" class="form-group">
-            </div>
-            <div class="form-group">
-                <label for="editLinkIcon">自定义图标URL</label>
-                <input type="text" id="editLinkIcon" class="form-group">
-            </div>
-            <div class="form-group">
-                <label for="editLinkWidth">宽度</label>
-                <input type="text" id="editLinkWidth" class="form-group" placeholder="例如: 120px">
-            </div>
-            <div class="form-group">
-                <label>
-                    <input type="checkbox" id="editLinkCustomIcon">
-                    使用自定义图标
-                </label>
-            </div>
-            <div class="form-actions">
-                <button class="btn btn-close" id="cancelLinkEdit">取消</button>
-                <button class="btn btn-primary" id="saveLinkEdit">保存</button>
-                <button class="btn btn-danger" id="deleteLink">删除</button>
             </div>
         </div>
     </div>
@@ -555,24 +512,21 @@
         };
 
         // DOM元素
-        const menuButton = document.getElementById('menuButton');
         const timeDisplay = document.getElementById('timeDisplay');
+        const menuButton = document.getElementById('menuButton');
         const searchInput = document.getElementById('searchInput');
         const searchButton = document.getElementById('searchButton');
         const engineSelector = document.getElementById('engineSelector');
         const statsContainer = document.getElementById('statsContainer');
+        const bilibiliStat = document.getElementById('bilibiliStat');
+        const youtubeStat = document.getElementById('youtubeStat');
         const mediaContainer = document.getElementById('mediaContainer');
         const quickLinks = document.getElementById('quickLinks');
-        const editButton = document.getElementById('editButton');
-        const mainEditModal = document.getElementById('mainEditModal');
+        const editModal = document.getElementById('editModal');
         const cancelEdit = document.getElementById('cancelEdit');
         const saveSettings = document.getElementById('saveSettings');
         const tabButtons = document.querySelectorAll('.tab-button');
         const tabContents = document.querySelectorAll('.tab-content');
-        const linkEditModal = document.getElementById('linkEditModal');
-        
-        // 当前编辑的链接索引
-        let currentEditingLinkIndex = -1;
 
         // 初始化
         document.addEventListener('DOMContentLoaded', function() {
@@ -582,25 +536,23 @@
             // 初始化界面
             updateAppearance();
             renderTime();
-            renderStats();
             renderMedia();
             renderLinks();
+            renderStats();
             
             // 设置定时器
             setInterval(renderTime, 50);
             setInterval(updateStats, config.stats.refreshInterval * 60000);
             
             // 事件监听器
-            menuButton.addEventListener('click', openMainEditModal);
+            menuButton.addEventListener('click', openEditModal);
             searchButton.addEventListener('click', handleSearch);
             searchInput.addEventListener('keypress', function(e) {
                 if (e.key === 'Enter') handleSearch();
             });
             
             engineSelector.addEventListener('click', toggleEngineSelection);
-            
-            editButton.addEventListener('click', openMainEditModal);
-            cancelEdit.addEventListener('click', closeMainEditModal);
+            cancelEdit.addEventListener('click', closeEditModal);
             saveSettings.addEventListener('click', saveConfig);
             
             tabButtons.forEach(button => {
@@ -641,16 +593,6 @@
                     reader.readAsDataURL(file);
                 }
             });
-            
-            document.getElementById('refreshStats').addEventListener('click', function() {
-                updateStats();
-                alert('统计数据已刷新');
-            });
-            
-            // 链接编辑模态框事件
-            document.getElementById('cancelLinkEdit').addEventListener('click', closeLinkEditModal);
-            document.getElementById('saveLinkEdit').addEventListener('click', saveLinkEdit);
-            document.getElementById('deleteLink').addEventListener('click', deleteLink);
         });
 
         // 从本地存储加载配置
@@ -717,12 +659,12 @@
             
             // 更新界面
             updateAppearance();
-            renderStats();
             renderMedia();
             renderLinks();
+            renderStats();
             
             // 关闭模态框
-            closeMainEditModal();
+            closeEditModal();
         }
 
         // 更新外观
@@ -758,7 +700,6 @@
             let result = '';
             let escape = false;
             let inMilliseconds = false;
-            let millisecondsProcessed = false;
             
             const weekdays = ['日', '一', '二', '三', '四', '五', '六'];
             
@@ -776,21 +717,10 @@
                     continue;
                 }
                 
-                // 处理毫秒标记
-                if (char === 'S' && !inMilliseconds && !millisecondsProcessed) {
-                    inMilliseconds = true;
-                    const ms = date.getMilliseconds().toString().padStart(3, '0');
-                    result += msDigits > 0 ? ms.substring(0, Math.min(msDigits, 3)) : '';
-                    millisecondsProcessed = true;
-                    continue;
-                }
-                
-                // 如果已经在处理毫秒，跳过后续的S
+                // 如果已经在处理毫秒部分，跳过后续的S字符
                 if (inMilliseconds && char === 'S') {
                     continue;
                 }
-                
-                inMilliseconds = false;
                 
                 switch (char) {
                     case 'Y':
@@ -813,6 +743,11 @@
                         break;
                     case 's':
                         result += date.getSeconds().toString().padStart(2, '0');
+                        break;
+                    case 'S':
+                        inMilliseconds = true;
+                        const ms = date.getMilliseconds().toString().padStart(3, '0');
+                        result += '.' + (msDigits > 0 ? ms.substring(0, Math.min(msDigits, 3)) : '');
                         break;
                     default:
                         result += char;
@@ -844,89 +779,41 @@
             document.getElementById('startTimer').textContent = '开始';
         }
 
-        // 渲染统计数据
-        function renderStats() {
-            statsContainer.innerHTML = '';
-            
-            if (config.stats.bilibiliFans > 0) {
-                const statItem = document.createElement('div');
-                statItem.className = 'stat-item';
-                statItem.innerHTML = `
-                    <span>B站粉丝数:</span>
-                    <span>${config.stats.bilibiliFans}</span>
-                `;
-                statsContainer.appendChild(statItem);
-            }
-            
-            if (config.stats.youtubeSubs > 0) {
-                const statItem = document.createElement('div');
-                statItem.className = 'stat-item';
-                statItem.innerHTML = `
-                    <span>YouTube订阅数:</span>
-                    <span>${config.stats.youtubeSubs}</span>
-                `;
-                statsContainer.appendChild(statItem);
-            }
-        }
-
         // 渲染媒体内容
         function renderMedia() {
             mediaContainer.innerHTML = '';
             
             if (config.media.imageUrl) {
-                const imgContainer = document.createElement('div');
-                imgContainer.className = 'media-item';
-                
                 const img = document.createElement('img');
                 img.src = config.media.imageUrl;
                 img.className = 'custom-image';
                 img.style.width = config.media.imageWidth;
-                img.addEventListener('click', () => openMediaEditor('image'));
-                imgContainer.appendChild(img);
-                
-                mediaContainer.appendChild(imgContainer);
+                mediaContainer.appendChild(img);
             }
             
             if (config.media.audioUrl) {
-                const audioContainer = document.createElement('div');
-                audioContainer.className = 'media-item';
-                
                 const audio = document.createElement('audio');
                 audio.src = config.media.audioUrl;
                 audio.controls = true;
                 audio.className = 'audio-player';
                 audio.style.width = config.media.audioWidth;
                 audio.volume = config.media.audioVolume;
-                audioContainer.appendChild(audio);
-                
-                mediaContainer.appendChild(audioContainer);
+                mediaContainer.appendChild(audio);
             }
             
             if (config.media.customHtml) {
                 const htmlContainer = document.createElement('div');
-                htmlContainer.className = 'media-item';
                 htmlContainer.innerHTML = config.media.customHtml;
-                htmlContainer.addEventListener('click', (e) => {
-                    if (e.target === htmlContainer) {
-                        openMediaEditor('html');
-                    }
-                });
                 mediaContainer.appendChild(htmlContainer);
             }
             
             if (config.media.iframeUrl) {
-                const iframeContainer = document.createElement('div');
-                iframeContainer.className = 'media-item';
-                
                 const iframe = document.createElement('iframe');
                 iframe.src = config.media.iframeUrl;
                 iframe.style.width = '100%';
                 iframe.style.height = '400px';
                 iframe.style.border = 'none';
-                iframeContainer.appendChild(iframe);
-                iframeContainer.addEventListener('click', () => openMediaEditor('iframe'));
-                
-                mediaContainer.appendChild(iframeContainer);
+                mediaContainer.appendChild(iframe);
             }
         }
 
@@ -934,13 +821,12 @@
         function renderLinks() {
             quickLinks.innerHTML = '';
             
-            config.links.forEach((link, index) => {
+            config.links.forEach(link => {
                 const linkElement = document.createElement('a');
                 linkElement.href = link.url;
                 linkElement.className = 'link-item';
                 linkElement.target = '_blank';
                 linkElement.style.width = link.width || 'auto';
-                linkElement.setAttribute('data-index', index);
                 
                 const icon = document.createElement('div');
                 icon.className = 'link-icon';
@@ -966,13 +852,22 @@
                 linkElement.appendChild(icon);
                 linkElement.appendChild(name);
                 quickLinks.appendChild(linkElement);
-                
-                // 添加点击事件打开编辑器
-                linkElement.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    openLinkEditor(index);
-                });
             });
+        }
+
+        // 渲染统计数据
+        function renderStats() {
+            if (config.stats.bilibiliFans > 0) {
+                bilibiliStat.textContent = `B站粉丝: ${config.stats.bilibiliFans}`;
+            } else {
+                bilibiliStat.textContent = 'B站粉丝: 加载中...';
+            }
+            
+            if (config.stats.youtubeSubs > 0) {
+                youtubeStat.textContent = `YouTube订阅: ${config.stats.youtubeSubs}`;
+            } else {
+                youtubeStat.textContent = 'YouTube订阅: 加载中...';
+            }
         }
 
         // 更新统计数据
@@ -985,27 +880,35 @@
                         const data = await response.json();
                         if (data.code === 0) {
                             config.stats.bilibiliFans = data.data.follower;
+                            bilibiliStat.textContent = `B站粉丝: ${config.stats.bilibiliFans}`;
                         }
                     }
                 }
                 
-                // 更新YouTube订阅数 - 需要后端支持
+                // 更新YouTube订阅数
                 if (config.stats.youtubeChannel && config.stats.youtubeApiKey) {
-                    // 实际应用中这里应该调用YouTube API
-                    // 由于跨域限制，这里只是模拟
-                    config.stats.youtubeSubs = Math.floor(Math.random() * 10000);
+                    // 这里需要实现YouTube API调用
+                    // 由于需要API密钥，这里只是示例结构
+                    // const response = await fetch(`https://www.googleapis.com/youtube/v3/channels?part=statistics&id=${config.stats.youtubeChannel}&key=${config.stats.youtubeApiKey}`);
+                    // const data = await response.json();
+                    // config.stats.youtubeSubs = data.items[0].statistics.subscriberCount;
+                    // youtubeStat.textContent = `YouTube订阅: ${config.stats.youtubeSubs}`;
+                    
+                    // 模拟数据
+                    config.stats.youtubeSubs = Math.floor(Math.random() * 50000);
+                    youtubeStat.textContent = `YouTube订阅: ${config.stats.youtubeSubs}`;
                 }
                 
                 config.stats.lastUpdated = Date.now();
-                renderStats();
-                localStorage.setItem('browserHomeConfig', JSON.stringify(config));
             } catch (error) {
                 console.error('获取统计数据失败:', error);
+                bilibiliStat.textContent = 'B站粉丝: 获取失败';
+                youtubeStat.textContent = 'YouTube订阅: 获取失败';
             }
         }
 
-        // 打开主编辑模态框
-        function openMainEditModal() {
+        // 打开编辑模态框
+        function openEditModal() {
             // 设置表单值
             document.getElementById('bgColor').value = config.appearance.bgColor;
             document.getElementById('textColor').value = config.appearance.textColor;
@@ -1036,70 +939,12 @@
             // 渲染链接编辑器
             renderLinkEditors();
             
-            mainEditModal.style.display = 'flex';
+            editModal.style.display = 'flex';
         }
 
-        // 关闭主编辑模态框
-        function closeMainEditModal() {
-            mainEditModal.style.display = 'none';
-        }
-
-        // 打开链接编辑器
-        function openLinkEditor(index) {
-            currentEditingLinkIndex = index;
-            const link = config.links[index];
-            
-            document.getElementById('editLinkName').value = link.name || '';
-            document.getElementById('editLinkUrl').value = link.url || '';
-            document.getElementById('editLinkIcon').value = link.icon || '';
-            document.getElementById('editLinkWidth').value = link.width || '';
-            document.getElementById('editLinkCustomIcon').checked = link.customIcon || false;
-            
-            linkEditModal.style.display = 'flex';
-        }
-
-        // 关闭链接编辑模态框
-        function closeLinkEditModal() {
-            linkEditModal.style.display = 'none';
-            currentEditingLinkIndex = -1;
-        }
-
-        // 保存链接编辑
-        function saveLinkEdit() {
-            if (currentEditingLinkIndex === -1) return;
-            
-            config.links[currentEditingLinkIndex] = {
-                name: document.getElementById('editLinkName').value,
-                url: document.getElementById('editLinkUrl').value,
-                icon: document.getElementById('editLinkIcon').value,
-                width: document.getElementById('editLinkWidth').value,
-                customIcon: document.getElementById('editLinkCustomIcon').checked
-            };
-            
-            localStorage.setItem('browserHomeConfig', JSON.stringify(config));
-            renderLinks();
-            renderLinkEditors();
-            closeLinkEditModal();
-        }
-
-        // 删除链接
-        function deleteLink() {
-            if (currentEditingLinkIndex === -1) return;
-            
-            if (confirm('确定要删除这个链接吗？')) {
-                config.links.splice(currentEditingLinkIndex, 1);
-                localStorage.setItem('browserHomeConfig', JSON.stringify(config));
-                renderLinks();
-                renderLinkEditors();
-                closeLinkEditModal();
-            }
-        }
-
-        // 打开媒体编辑器
-        function openMediaEditor(type) {
-            // 切换到媒体标签页
-            switchTab('media');
-            openMainEditModal();
+        // 关闭编辑模态框
+        function closeEditModal() {
+            editModal.style.display = 'none';
         }
 
         // 切换标签页
@@ -1144,8 +989,7 @@
                             使用自定义图标
                         </label>
                     </div>
-                    <button class="btn remove-link" data-index="${index}">删除</button>
-                    <hr>
+                    <button class="remove-link" data-index="${index}">删除</button>
                 `;
                 container.appendChild(editor);
             });
@@ -1188,8 +1032,7 @@
                         使用自定义图标
                     </label>
                 </div>
-                <button class="btn remove-link" data-index="-1">删除</button>
-                <hr>
+                <button class="remove-link" data-index="-1">删除</button>
             `;
             container.appendChild(editor);
             
